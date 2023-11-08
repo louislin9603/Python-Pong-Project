@@ -8,7 +8,7 @@ git clone git@github.com:louislin9603/Python-Pong-Project.git
 cd .\Python-Pong-Project\
 pip3 install -r requirements.txt
 ```
-#Result of the pip3
+### Result of the pip3
 ```bash
 Collecting pygame==2.5.2 (from -r requirements.txt (line 1))
   Downloading pygame-2.5.2-cp312-cp312-win_amd64.whl.metadata (13 kB)
