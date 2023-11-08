@@ -5,5 +5,5 @@
 ```bash
 cd College/Python
 git clone git@github.com:louislin9603/Python-Pong-Project.git
-pip3 install -r requirements.txt
+cd .\Python-Pong-Project\
 ```
