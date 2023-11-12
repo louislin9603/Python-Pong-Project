@@ -176,6 +176,17 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(("localhost", 12321)) 
+
+    def receieve_data():
+        while True:
+            # Receive game state from the server
+            data = client.recv(1024)
+            if not data:
+                break
+
+
+
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
 
