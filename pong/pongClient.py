@@ -83,7 +83,18 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-        
+        def send_game_update(client_socket, paddle_location, ball_position, score):
+         game_update = {
+        'paddle_location': paddle_location,
+        'ball_position': ball_position,
+        'score': score
+    }
+    serialized_game_update = json.dumps(game_update).encode('utf-8')
+
+    try:
+        client_socket.send(serialized_game_update)
+    except Exception as e:
+        print(f"Failed to send game update: {e}")
         
         # =========================================================================================
 
