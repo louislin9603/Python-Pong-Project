@@ -28,10 +28,7 @@ def handleClient(client, address):
             data = client.recv(1024).decode()
 
             try:
-                #playerPaddleObj, ball, lScore, rScore = map(int, data.split(','))
-                #print(f"Received data - Player Paddle Object: {playerPaddleObj}, Ball: {ball}, lScore: {lScore}, rScore: {rScore}")
-                ballX = map(int, data.split(','))
-                print(f"Received data - Player ball x value: {ballX}")
+                print(f"Received data - Player ball x value: ")
             #except ValueError:
             except Exception as e:
                 print(f"Received data is in an incorrect format: {e}")
@@ -48,7 +45,7 @@ def handleClient(client, address):
 
 #Makes initial
 def run_server():
-    server_ip = "10.113.33.94" #Assuming Isaiah Huffman hosting
+    server_ip = "10.113.33.94" #Assuming Isaiah Huffman on UKY VPN is hosting
     port = 12321               #Let's just use this port
 
     try:
@@ -59,18 +56,32 @@ def run_server():
         server.listen(2) #specify we want 2 clients to be speaking to this server
         print(f"Listening on {server_ip}:{port}")
 
+        noOfClients = 0 #Holds how many clients we have connected
+        paddlePolder = "left"
         while True:
 
             #Establishing connection with client
             client_socket, address = server.accept() 
             print(f"Accepted connection from {address[0]}:{address[1]}")
+            
+            noOfClients += 1
+
+            #Determining paddle position
+            if noOfClients == 1:
+                 paddlePolder = "left"
+            elif noOfClients == 2:
+                 paddlePolder = "right"
+            else:
+                 #Code here to see what happens if we have more than 2 clients
+                 print("Wait, who is the third person?")
+            
 
             
             # Initial data to send
             data = {
                 "screenheight": 400,
                 "screenwidth": 600,
-                "playerPaddle": "left"
+                "playerPaddle": paddlePolder
                 }
 
             # Convert data to JSON nonsense, send it over
@@ -85,7 +96,7 @@ def run_server():
             thread.start()
 
     except Exception as e:
-            print(f"Server error: {e}")
+            print(f"Server error, something wrong with client connection?: {e}")
     finally:
             #Jobs done, go home
             server.close() 
