@@ -166,7 +166,17 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
+          serialized_game_update = json.dumps({
+            'paddle_location': paddle_location,  # Replace with actual paddle location variable
+            'ball_position': ball_position,      # Replace with actual ball position variable
+            'score': score,                      # Replace with actual score variable
+            'sync': sync                         # Include the sync number in the update
+            }).encode('utf-8')
 
+        try:
+            client_socket.send(serialized_game_update)  # Replace with actual socket variable
+        except Exception as e:
+            print(f"Failed to send game update: {e}")
         # =========================================================================================
 
 
