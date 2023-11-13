@@ -223,8 +223,8 @@ def startScreen():
 
 if __name__ == "__main__":
     #startScreen()
-    
+    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
-    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    
