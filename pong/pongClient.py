@@ -190,20 +190,17 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # app           The tk window object, needed to kill the window
     
     # Create a socket and connect to the server
-    # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_ip = "10.113.33.94"
-    port = 12321
-
+    port = int(port)
     try:
-        client.connect((server_ip, port)) #Connect to server
+        client.connect((ip, port)) #Connect to server
         joinData = client.recv(1024)
     except Exception as e:
         print("Client could not connect to server and pull initial data (initial connection failed): {e}")
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
     try:
-        #Pull screenheight/width, player paddle orientation
+        #Distribute screenheight/width, player paddle orientation
         initialData = json.loads(joinData.decode())
         screenHeight = initialData["screenheight"]
         screenWidth = initialData["screenwidth"]
