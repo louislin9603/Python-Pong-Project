@@ -36,7 +36,7 @@ def run_server():
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
         #server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
         server.bind((server_ip, port)) #connect to local socket
-        server.listen(2) #specify we want 2 clients to be speaking to this server
+        server.listen(5) #specify we want 2 clients to be speaking to this server
         print(f"Listening on {server_ip}:{port}")
 
         while True:
