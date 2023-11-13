@@ -84,11 +84,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
         
-            
-            #Trying to send over the paddle position, ball, and score
+            #Score is an integer, playerPaddleObj is of type "assets.code.helperCode.Paddle"
+            #Trying to send over the paddle position, ball, and score.
             try:
-                data_to_send = f"{playerPaddleObj},{ball},{lScore}, {rScore}"
+                #data_to_send = f"{playerPaddleObj},{ball},{lScore},{rScore}"
+                data_to_send = f"{ball.rect.x}"
                 client.sendall(data_to_send.encode())
+            
             except Exception as e:
                 print(f"Error sending from client to server the score and playerpaddle and ball: {e}")
 
@@ -191,10 +193,22 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_ip = "10.113.33.94"
     port = 12321
-    client.connect((server_ip, port)) #Connect to server
+
+    try:
+        client.connect((server_ip, port)) #Connect to server
+        joinData = client.recv(1024)
+
+    except Exception as e:
+        print("Client could not connect to server (initial connection failed): {e}")
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
-
+    try:
+        print("Polder")
+        screenHeight, screenWidth = map(int, joinData.decode().split(','))
+        #Pull the player paddle information here
+        #Pull whether or not you are on the right or the left here
+    except Exception as e:
+        print(f"Could not pull the initial data from the client, error code: {e}")
 
     # If you have messages you'd like to show the user use the errorLabel widget like so
     errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
@@ -202,9 +216,9 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     errorLabel.update()     
 
     # Close this window and start the game with the info passed to you from the server
-    #app.withdraw()     # Hides the window (we'll kill it later)
-    #playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
-    #app.quit()         # Kills the window
+    app.withdraw()     # Hides the window (we'll kill it later)
+    playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
+    app.quit()         # Kills the window
 
 
 # This displays the opening screen, you don't need to edit this (but may if you like)
@@ -238,9 +252,10 @@ def startScreen():
     app.mainloop()
 
 if __name__ == "__main__":
-    #startScreen()
-    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    startScreen()
+    #playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
+    
     
