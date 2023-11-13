@@ -1,0 +1,86 @@
+10.113.33.94 IP address
+
+Simple Client Code:
+
+import socket               #Library needed for sockets
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Creating the client
+
+client.connect(("10.113.33.94", 12321))                   #Connecting to server
+
+
+
+client.send("Hello Server".encode())
+
+resp = client.recv(1024)
+
+print(f"Server said: {resp.decode()}")
+
+msg = ""
+while msg != "quit":
+    msg = input(":")
+    client.send(msg.encode())
+    resp = client.recv(1024)
+    print(f"Server said: {resp.decode()}")
+
+
+client.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Simple Server Code:
+import socket
+import threading
+
+# Use this file to write your server logic
+# You will need to support at least two clients
+# You will need to keep track of where on the screen (x,y coordinates) each paddle is, the score 
+# for each player and where the ball is, and relay that to each client
+# I suggest you use the sync variable in pongClient.py to determine how out of sync your two
+# clients are and take actions to resync the gamesserver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      #Creating the server
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      #Creating the server
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #Working on localhost, need this
+
+server.bind(("10.113.33.94", 12321))
+server.listen(5)
+
+
+clientSocket, clientAddress = server.accept() 
+
+
+
+
+#message = clientSocket.recv(1024) #Expect "Hello Server"
+
+#print(f"Client sent: {message.decode()}")
+
+#clientSocket.send("Hello client.".encode())
+
+msg = ""
+while msg != "quit":
+    msg = clientSocket.recv(1024).decode() #receive clientSocket, then decode it, then put it in the msg
+    print(f"Client sent: {msg}")
+    clientSocket.send(msg.encode())
+
+
+
+clientSocket.close()
+server.close()
+
