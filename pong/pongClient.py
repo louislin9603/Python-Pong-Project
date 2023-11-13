@@ -10,6 +10,7 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import json
 
 from assets.code.helperCode import *
 
@@ -197,16 +198,16 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     try:
         client.connect((server_ip, port)) #Connect to server
         joinData = client.recv(1024)
-
     except Exception as e:
-        print("Client could not connect to server (initial connection failed): {e}")
+        print("Client could not connect to server and pull initial data (initial connection failed): {e}")
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
     try:
-        print("Polder")
-        screenHeight, screenWidth = map(int, joinData.decode().split(','))
-        #Pull the player paddle information here
-        #Pull whether or not you are on the right or the left here
+        #Pull screenheight/width, player paddle orientation
+        initialData = json.loads(joinData.decode())
+        screenHeight = initialData["screenheight"]
+        screenWidth = initialData["screenwidth"]
+        playerPaddle = initialData["playerPaddle"]  
     except Exception as e:
         print(f"Could not pull the initial data from the client, error code: {e}")
 
@@ -217,7 +218,8 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
-    playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
+    #playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
+    playGame(screenWidth, screenHeight, (playerPaddle), client)  # User will be either left or right paddle
     app.quit()         # Kills the window
 
 

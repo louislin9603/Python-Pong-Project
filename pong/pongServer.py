@@ -65,15 +65,21 @@ def run_server():
             client_socket, address = server.accept() 
             print(f"Accepted connection from {address[0]}:{address[1]}")
 
-            #Send over screenwidth and height
-            screenwidth = 600
-            screenheight = 400
-            screenInfo = f"{screenwidth},{screenheight}"
-            client_socket.sendall(screenInfo.encode())
+            
+            # Initial data to send
+            data = {
+                "screenheight": 400,
+                "screenwidth": 600,
+                "playerPaddle": "left"
+                }
 
-            #Send over the side of screen that they will be on
-    
-        
+            # Convert data to JSON nonsense, send it over
+            try:
+                initialData = json.dumps(data)
+                client_socket.sendall(initialData.encode())
+            except Exception as e:
+                print(f"Somehow, the server could not convert the data to JSON and send it to client: {e}")
+
             #Launch a thread to process each client
             thread = threading.Thread(target=handleClient, args=(client_socket, address,))
             thread.start()
