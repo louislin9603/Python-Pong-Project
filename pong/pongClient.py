@@ -186,7 +186,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
         sync += 1
-        print(f"Sync increased: {sync}")
+        
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
@@ -199,13 +199,15 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 # Parse the JSON data
                 server_update = json.loads(server_update_data.decode())
 
-                # Extract information from the server update
-                server_message = server_update.get("server_message", "")
-                server_sync = server_update.get("sync", "")
-
-                # Use the received information as needed in your client-side code
-                print(f"Server message: {server_message}")
-                print(f"Server sync: {server_sync}")
+                # Extract information from the server update and apply it
+                ball.rect.x = server_update["BallX"]
+                ball.rect.y = server_update["BallY"]
+                playerPaddleObj.rect.x = server_update["playerPaddleX"]
+                playerPaddleObj.rect.y = server_update["playerPaddleY"]
+                opponentPaddleObj.rect.x = server_update["OppPaddleX"]
+                opponentPaddleObj.rect.y = server_update["OppPaddleY"]
+                sync = server_update["sync"]
+            
 
         except Exception as e:
             print(f"Error receiving server update: {e}")

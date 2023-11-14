@@ -12,6 +12,10 @@ import select
 import sys
 import json
 import time
+import uuid
+
+gameState = {}
+gameStateLock = threading.Lock()
 
 # Use this file to write your server logic
 # You will need to support at least two clients
@@ -23,6 +27,12 @@ import time
 
 # Focused on a single client
 def handle_client(clientSocket, clientAddress):
+    global gameState, gameStateLock
+    clientID = str(uuid.uuid4())
+
+    with gameStateLock:
+        gameState[clientID] = {'sync': 0, 'gameData': {}}
+
     try:
         while True:
             #Retrieve message from client
@@ -32,7 +42,10 @@ def handle_client(clientSocket, clientAddress):
                 break
 
             #Pull updated data from client
-            updateData = json.loads(message)
+            try:
+                updateData = json.loads(message.decode())
+            except Exception as e:
+                print(f"There was an issue unloading update information from client: {e}")
 
             #Update the actual data
             ballX = updateData["BallX"]
@@ -41,15 +54,34 @@ def handle_client(clientSocket, clientAddress):
             playerPaddleY = updateData["PaddleY"]
             opponentPaddleX = updateData["OppPaddleX"]
             opponentPaddleY = updateData["OppPaddleY"]
-
-            print(f"BallX = {ballX}")
-            print(f"BallY = {ballY}")
             sync = updateData["sync"]
 
-            print(f"Sync: {sync}")
+        
 
+          #Compare the syncs here
+          #Establish which sync is most updated, then take the gameData of the updated sync and ship them out
+
+
+            with gameStateLock:
+                # Update this client's state
+                gameState[clientID]['sync'] = updateData['sync']
+                gameState[clientID]['gameData'] = updateData
+
+            # Compare sync values
+                other_client_id = [id for id in gameState if id != clientID][0]  # Assuming only two clients
+                if gameState[clientID]['sync'] < gameState[other_client_id]['sync']:
+                    # This client is lagging, send it the most updated data
+                    most_recent_data = gameState[other_client_id]['gameData']
+                    clientSocket.sendall(json.dumps(most_recent_data).encode() + b'\n')
+
+            '''
             serverUpdate = {
-                "server_message": "This is a server update!",
+                "BallX": ballX,
+                "BallY": ballY,
+                "playerPaddleX": playerPaddleX,
+                "playerPaddleY": playerPaddleY,
+                "OppPaddleX": opponentPaddleX,
+                "OppPaddleY": opponentPaddleY,
                 "sync": sync
             }
             
@@ -59,6 +91,7 @@ def handle_client(clientSocket, clientAddress):
                 clientSocket.sendall(update_json.encode() + b'\n')
             except Exception as e:
                 print(f"Error sending update to client: {e}")
+                '''
 
     except Exception as f:
       print(f"error with handling client: {f}")
