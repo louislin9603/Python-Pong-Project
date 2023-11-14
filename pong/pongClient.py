@@ -10,6 +10,8 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import json
+import time
 
 from assets.code.helperCode import *
 
@@ -63,6 +65,11 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     while True:
         # Wiping the screen
         screen.fill((0,0,0))
+        
+        pygame.display.flip()
+        
+        #Test1
+        print("Cleaning the board")
 
         # Getting keypress events
         for event in pygame.event.get():
@@ -84,6 +91,31 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
         
+        #Getting the current paddle information
+
+        update_data = {
+            #player paddle
+            "PaddleX": playerPaddleObj.rect.x,
+            "PaddleY": playerPaddleObj.rect.y,
+
+            #opponent paddle
+            "OppPaddleX": opponentPaddleObj.rect.x,
+            "OppPaddleY": opponentPaddleObj.rect.y,
+
+            #ball location
+            "BallX": ball.rect.x,
+            "BallY": ball.rect.y,
+
+            #current sync number
+            "sync": sync
+            }
+        
+        #Send the data over to server
+        try:
+            updateData = json.dumps(update_data)
+            client.sendall(updateData.encode() + b'\n')
+        except Exception as e:
+            print(f"Could not send data as JSON to server: {e}")
         
         # =========================================================================================
 
@@ -95,6 +127,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             elif paddle.moving == "up":
                 if paddle.rect.topleft[1] > 10:
                     paddle.rect.y -= paddle.speed
+
+        #Test2
 
         # If the game is over, display the win message
         if lScore > 4 or rScore > 4:
@@ -152,10 +186,29 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
         sync += 1
+        print(f"Sync increased: {sync}")
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
+        try:
+            # Receive the server update from the server
+            server_update_data = client.recv(1024)
 
+                # Check if the received data is not empty
+            if server_update_data:
+                # Parse the JSON data
+                server_update = json.loads(server_update_data.decode())
+
+                # Extract information from the server update
+                server_message = server_update.get("server_message", "")
+                server_sync = server_update.get("sync", "")
+
+                # Use the received information as needed in your client-side code
+                print(f"Server message: {server_message}")
+                print(f"Server sync: {server_sync}")
+
+        except Exception as e:
+            print(f"Error receiving server update: {e}")
         # =========================================================================================
 
 
@@ -175,34 +228,40 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    # Connect the client
-    client.connect(("localhost",12321))
 
-    # Send a message to the server
-    client.send("localhost".encode())
+    serverIP = ip
+    # Connection to the server
 
-    # Wait for response
-    resp = client.recv(1024)
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((serverIP, int(port)))
+        
+        # Connected
+        print(f"A connection has been made with IP: {serverIP}:{port}")
+          
+    except Exception as e:
+        print(f"Error with connection: {e}")
+        # Update the errorLabel widget with an error message
+        error_message = f"Some update text. You input: IP: {serverIP}, Port: {port}"
+        errorLabel.config(text=error_message)
+        errorLabel.update_idletasks()  # Update the label without waiting for events
 
-    # Get the required information from your server (screen width, height & player paddle, "left or "right)
-    msg = ""
-    while msg != "quit":
-        msg = input(":")
-        client.send(msg.encode())
-        resp = client.recv(1024)
-        print(f"Server said: {resp.decode()}")
-
-    # If you have messages you'd like to show the user use the errorLabel widget like so
-    errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
-    # You may or may not need to call this, depending on how many times you update the label
-    errorLabel.update()     
+    # Get the required information from your server (screen width, height & player paddle, "left or right")
+    try:
+        data = client.recv(1024)
+        initialData = json.loads(data.decode())
+        screenHeight = initialData["screenheight"]
+        screenWidth = initialData["screenwidth"]
+        playerPaddle = initialData["playerPaddle"]  
+    except Exception as e:
+        print(f"Could not pull the initial data from the server, error: {e}")
 
     # Close this window and start the game with the info passed to you from the server
-    #app.withdraw()     # Hides the window (we'll kill it later)
-    #playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
-    #app.quit()         # Kills the window
+    app.withdraw()     # Hides the window (we'll kill it later)
+    playGame(screenWidth, screenHeight, playerPaddle, client)  # User will be either left or right paddle
+    print("Disconnected")
+    app.quit()         # Kills the window
+
 
 
 # This displays the opening screen, you don't need to edit this (but may if you like)
@@ -231,14 +290,15 @@ def startScreen():
     errorLabel.grid(column=0, row=4, columnspan=2)
 
     joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
+    
     joinButton.grid(column=0, row=3, columnspan=2)
 
     app.mainloop()
 
 if __name__ == "__main__":
-    #startScreen()
-    
+    startScreen()
+
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
-    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    #playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
