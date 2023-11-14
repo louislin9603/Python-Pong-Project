@@ -108,7 +108,7 @@ def initalize_server():
                 data = {
                     "screenheight": 400,
                     "screenwidth": 600,
-                    "playerPaddle": "left"
+                    "playerPaddle": paddleHolder
                     }
 
                 try:
