@@ -24,16 +24,27 @@ def handleClient(client, address):
     #The below "try" sequence is to pull the playerPaddle location, the ball, and the score from the client
     try:
         while True:
-            # receive and print client messages
-            data = client.recv(1024).decode()
 
+
+            
             try:
-                print(f"Received data - Player ball x value: ")
-            #except ValueError:
+                # Pull the update information from client, put it into variables
+                
+                data = client.recv(1024).decode()
+                updateData = json.loads(data)
+                ballX = updateData["ballX"]
+                ballY = updateData["ballY"]
+                playerPaddleX = updateData["playerPaddleObjX"]  
+                playerPaddleY = updateData["playerPaddleObjY"]
+                opponentPaddleX = updateData["opponentPaddleObjX"]
+                opponentPaddleY = updateData["opponentPaddleObjY"]
+                sync = updateData["sync"]
+                
+
             except Exception as e:
                 print(f"Received data is in an incorrect format: {e}")
-                break
-
+                print(f"Raw data received: {data}")
+                
             
 
     except Exception as e:
@@ -103,7 +114,6 @@ def run_server():
             address.close()
 
 
-        
 
 
 run_server()

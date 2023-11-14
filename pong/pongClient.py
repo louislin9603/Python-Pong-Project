@@ -84,21 +84,23 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-        
-            #Score is an integer, playerPaddleObj is of type "assets.code.helperCode.Paddle"
+            data = {
+                "ballX": ball.rect.x,
+                "ballY": ball.rect.y,
+                "playerPaddleObjX": playerPaddleObj.rect.x,
+                "playerPaddleObjY": playerPaddleObj.rect.y,
+                "opponentPaddleObjX": opponentPaddleObj.rect.x,
+                "opponentPaddleObjY": opponentPaddleObj.rect.y,
+                "sync": sync
+                }
+            
             #Trying to send over the paddle position, ball, and score.
             try:
-                #data_to_send = f"{playerPaddleObj},{ball},{lScore},{rScore}"
-                data_to_send = f"{ball.rect.x}"
-                client.sendall(data_to_send.encode())
-            
+                updateData = json.dumps(data)
+                client.sendall(updateData.encode() + b'\n')
+
             except Exception as e:
-                print(f"Error sending from client to server the score and playerpaddle and ball: {e}")
-
-
-     
-
-
+                print(f"Error updating from client to server: {e}")
 
 
         # =========================================================================================
