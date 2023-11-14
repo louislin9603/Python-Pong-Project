@@ -69,7 +69,7 @@ def handle_client(clientSocket, clientAddress):
 # Start server
 def initalize_server():
 
-    serverIP = "10.113.32.126"
+    serverIP = "10.113.33.94"
     port = 12321
 
     try:
