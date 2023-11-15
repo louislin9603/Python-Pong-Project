@@ -92,23 +92,29 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Feel free to change when the score is updated to suit your needs/requirements
         
         #Getting the current paddle information
+        try:
+            update_data = {
+                #player paddle
+                "PaddleX": playerPaddleObj.rect.x,
+                "PaddleY": playerPaddleObj.rect.y,
 
-        update_data = {
-            #player paddle
-            "PaddleX": playerPaddleObj.rect.x,
-            "PaddleY": playerPaddleObj.rect.y,
+                #opponent paddle
+                "OppPaddleX": opponentPaddleObj.rect.x,
+                "OppPaddleY": opponentPaddleObj.rect.y,
 
-            #opponent paddle
-            "OppPaddleX": opponentPaddleObj.rect.x,
-            "OppPaddleY": opponentPaddleObj.rect.y,
+                #ball location
+                "BallX": ball.rect.x,
+                "BallY": ball.rect.y,
 
-            #ball location
-            "BallX": ball.rect.x,
-            "BallY": ball.rect.y,
+                #Score
+                "lScore": lScore,
+                "rScore": rScore,
 
-            #current sync number
-            "sync": sync
-            }
+                #current sync number
+                "sync": sync
+                }
+        except:
+            print("Could not pull paddle information to send to server")
         
         #Send the data over to server
         try:
@@ -200,13 +206,19 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 server_update = json.loads(server_update_data.decode())
 
                 # Extract information from the server update and apply it
-                ball.rect.x = server_update["BallX"]
-                ball.rect.y = server_update["BallY"]
-                playerPaddleObj.rect.x = server_update["playerPaddleX"]
-                playerPaddleObj.rect.y = server_update["playerPaddleY"]
-                opponentPaddleObj.rect.x = server_update["OppPaddleX"]
-                opponentPaddleObj.rect.y = server_update["OppPaddleY"]
-                sync = server_update["sync"]
+                try:
+                    ball.rect.x = server_update["BallX"]
+                    ball.rect.y = server_update["BallY"]
+                    playerPaddleObj.rect.x = server_update["playerPaddleX"]
+                    playerPaddleObj.rect.y = server_update["playerPaddleY"]
+                    opponentPaddleObj.rect.x = server_update["OppPaddleX"]
+                    opponentPaddleObj.rect.y = server_update["OppPaddleY"]
+                    sync = server_update["sync"]
+                except:
+                    print("Failure extracting server update")
+
+            else:
+                print("Error: received data from server was empty")
             
 
         except Exception as e:

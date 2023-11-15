@@ -29,14 +29,18 @@ gameStateLock = threading.Lock()
 def handle_client(clientSocket, clientAddress):
     global gameState, gameStateLock
     clientID = str(uuid.uuid4())
+    print(f"Client ID for {clientAddress} is: {clientID}")
 
     with gameStateLock:
-        gameState[clientID] = {'sync': 0, 'gameData': {}}
+       gameState[clientID] = {'sync': 0, 'gameData': {}}
 
     try:
         while True:
             #Retrieve message from client
-            message = clientSocket.recv(1024)
+            try:
+                message = clientSocket.recv(1024)
+            except:
+                print("Could not retrieve message from client")
 
             if not message:
                 break
@@ -44,55 +48,36 @@ def handle_client(clientSocket, clientAddress):
             #Pull updated data from client
             try:
                 updateData = json.loads(message.decode())
+                print("Got data from client")
             except Exception as e:
                 print(f"There was an issue unloading update information from client: {e}")
-
-            #Update the actual data
-            ballX = updateData["BallX"]
-            ballY = updateData["BallY"]
-            playerPaddleX = updateData["PaddleX"]
-            playerPaddleY = updateData["PaddleY"]
-            opponentPaddleX = updateData["OppPaddleX"]
-            opponentPaddleY = updateData["OppPaddleY"]
-            sync = updateData["sync"]
-
-        
 
           #Compare the syncs here
           #Establish which sync is most updated, then take the gameData of the updated sync and ship them out
 
-
-            with gameStateLock:
-                # Update this client's state
-                gameState[clientID]['sync'] = updateData['sync']
-                gameState[clientID]['gameData'] = updateData
-
-            # Compare sync values
-                other_client_id = [id for id in gameState if id != clientID][0]  # Assuming only two clients
-                if gameState[clientID]['sync'] < gameState[other_client_id]['sync']:
-                    # This client is lagging, send it the most updated data
-                    most_recent_data = gameState[other_client_id]['gameData']
-                    clientSocket.sendall(json.dumps(most_recent_data).encode() + b'\n')
-
-            '''
-            serverUpdate = {
-                "BallX": ballX,
-                "BallY": ballY,
-                "playerPaddleX": playerPaddleX,
-                "playerPaddleY": playerPaddleY,
-                "OppPaddleX": opponentPaddleX,
-                "OppPaddleY": opponentPaddleY,
-                "sync": sync
-            }
-            
-            update_json = json.dumps(serverUpdate)
             try:
-            # Send the JSON string to the client
-                clientSocket.sendall(update_json.encode() + b'\n')
-            except Exception as e:
-                print(f"Error sending update to client: {e}")
-                '''
+                with gameStateLock:
+                    # Update this client's state
+                    gameState[clientID]['sync'] = updateData['sync']
+                    gameState[clientID]['gameData'] = updateData
+            except:
+                print("Failure updating gameData and sync")
+            
+            # Compare sync values
+            try:
+                other_client_id = [id for id in gameState if id != clientID][0]  # Assuming only two clients
+            except:
+                print("The line that I didn't think would work didn't work")
 
+            try:
+                    if gameState[clientID]['sync'] < gameState[other_client_id]['sync']:
+                        # This client is lagging, send it the most updated data
+                        serverUpdate = gameState[other_client_id]['gameData']
+                        print(f"most_recent_data: {serverUpdate}")
+                        clientSocket.sendall(json.dumps(serverUpdate).encode())
+            except:
+                print("Failure determining game sync and sending it to clients")
+        
     except Exception as f:
       print(f"error with handling client: {f}")
     finally:
