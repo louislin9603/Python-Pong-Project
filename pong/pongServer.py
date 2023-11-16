@@ -36,7 +36,7 @@ gameState = {
     },
     "sync":0
 }
-gameStateLock = threading.Lock()
+gameStateLock = threading.Lock()        #prevent two threads from interlocking
 
 # Use this file to write your server logic
 # You will need to support at least two clients
@@ -51,11 +51,18 @@ def handle_client(clientSocket, Paddle, shutdown):
     while not shutdown.is_set():
         msg = clientSocket.recv()
 
+        #parse thoruhg received message
+
+
+        #if no message, break out of loop
         if msg is None:
             print('Error: No client message')
-            shutdown.set()
+            shutdown.set()          
             continue
         
+    
+
+        #if message received by client == key (middleClient, start, or grab)
         if msg['key'] == 'middleClient':
         
             # Compare the msg['sync'] against gameState['sync']
@@ -139,7 +146,7 @@ def initalize_server():
             noOfClients = 0             #number of clients connected
             paddleHolder = "left"
 
-            threadHolder = []
+            threadHolder = []           #place clients into here to iteratively join when closing
             while noOfClients < 2:
                 # Accepts a client from the connection
                 clientSocket, clientAddress = server.accept()
@@ -149,13 +156,15 @@ def initalize_server():
                 
 
                 # Determine current player paddle position
-                if noOfClients == 1:        #Player 1
+                if noOfClients == 0:        #Player 1
                     paddleHolder = "left"
-                elif noOfClients == 2:      #Player 2
+                elif noOfClients == 1:      #Player 2
                     paddleHolder = "right"
                 #else:
                     #more than two players, maybe have them wait without crashing
 
+                # Test 
+                print(f"paddleholder = {paddleHolder}")
                 
                 data = {
                     "screenheight": 400,
@@ -173,8 +182,8 @@ def initalize_server():
                 shutdown = clientSocket.set()       #This line may not work, delete if crashing randomly
                 client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown,))
                 client_handler.start()
-                threadHolder.append(client_handler)
-                noOfClients += 1        #increase client[i]
+                threadHolder.append(client_handler)     #add client to array threadHolder
+                noOfClients += 1                        #increase client[i]
 
             server.close()
             for client in threadHolder:

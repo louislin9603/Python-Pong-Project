@@ -211,6 +211,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             except:
                 print("Could not send the grab request to the server.")
 
+            #client code that retrieves the gamestate
             
     
 
