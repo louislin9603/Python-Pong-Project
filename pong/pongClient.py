@@ -12,6 +12,7 @@ import sys
 import socket
 import json
 import time
+import threading
 
 from assets.code.helperCode import *
 
@@ -303,11 +304,17 @@ def startScreen():
     errorLabel = tk.Label(text="")
     errorLabel.grid(column=0, row=4, columnspan=2)
 
-    joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
     
-    joinButton.grid(column=0, row=3, columnspan=2)
+    button_handler = threading.Thread(target=joinGame, args=(app, ipEntry, portEntry, errorLabel))
+    button_handler.start()   
+     
+    app.mainloop()   
 
-    app.mainloop()
+
+
+def joinGame(app, ipEntry, portEntry, errorLabel):
+    joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
+    joinButton.grid(column=0, row=3, columnspan=2) 
 
 if __name__ == "__main__":
     startScreen()
