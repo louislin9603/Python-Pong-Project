@@ -94,15 +94,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         
         #Getting the current paddle information
         try:
+            key = "middleClient"        #Cause we're in the middle of the client
             update_data = {
                 #player paddle
-                "PaddleX": playerPaddleObj.rect.x,
                 "PaddleY": playerPaddleObj.rect.y,
+                "paddleYMoving": playerPaddleObj.moving,
 
-                #opponent paddle
-                "OppPaddleX": opponentPaddleObj.rect.x,
-                "OppPaddleY": opponentPaddleObj.rect.y,
-
+            
                 #ball location
                 "BallX": ball.rect.x,
                 "BallY": ball.rect.y,
@@ -111,18 +109,22 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "lScore": lScore,
                 "rScore": rScore,
 
+                "key": key,
+
                 #current sync number
                 "sync": sync
                 }
         except:
-            print("Could not pull paddle information to send to server")
+            print("Could not pull paddle information to send to server, its FUBAR")
         
-        #Send the data over to server
+        #Send the request to pull paddle information right here.
         try:
             updateData = json.dumps(update_data)
-            client.sendall(updateData.encode() + b'\n')
+            client.send(updateData.encode())
         except Exception as e:
             print(f"Could not send data as JSON to server: {e}")
+
+    
         
         # =========================================================================================
 
@@ -198,29 +200,21 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
         try:
-            # Receive the server update from the server
-            server_update_data = client.recv(1024)
 
-                # Check if the received data is not empty
-            if server_update_data:
-                # Parse the JSON data
-                server_update = json.loads(server_update_data.decode())
-
-                # Extract information from the server update and apply it
-                try:
-                    ball.rect.x = server_update["BallX"]
-                    ball.rect.y = server_update["BallY"]
-                    playerPaddleObj.rect.x = server_update["playerPaddleX"]
-                    playerPaddleObj.rect.y = server_update["playerPaddleY"]
-                    opponentPaddleObj.rect.x = server_update["OppPaddleX"]
-                    opponentPaddleObj.rect.y = server_update["OppPaddleY"]
-                    sync = server_update["sync"]
-                except:
-                    print("Failure extracting server update")
-
-            else:
-                print("Error: received data from server was empty")
+            update_data = {
+               "key": "grab"
+                }
             
+            try:
+                updateServer = json.dumps(update_data)
+                client.send(updateServer.encode())
+            except:
+                print("Could not send the grab request to the server.")
+
+            
+    
+
+          
 
         except Exception as e:
             print(f"Error receiving server update: {e}")
