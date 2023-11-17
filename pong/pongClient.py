@@ -22,8 +22,8 @@ from assets.code.helperCode import *
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
     time.sleep(2)
-    print("Game is starting...")
-
+    print("Game is starting")
+    
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
