@@ -54,9 +54,11 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
     ball = Ball(pygame.Rect(screenWidth/2, screenHeight/2, 5, 5), -5, 0)
 
+    oppPaddleDirection = "left"
     if playerPaddle == "left":
         opponentPaddleObj = rightPaddle
         playerPaddleObj = leftPaddle
+        oppPaddleDirection = "right"
     else:
         opponentPaddleObj = leftPaddle
         playerPaddleObj = rightPaddle
@@ -99,6 +101,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "PaddleY": playerPaddleObj.rect.y,
                 "paddleYMoving": playerPaddleObj.moving,
 
+                #opponent paddle
+                "OppPaddleY": opponentPaddleObj.rect.y,
+                "OppPaddleYMoving": opponentPaddleObj.moving,
+
                 #ball location
                 "BallX": ball.rect.x,
                 "BallY": ball.rect.y,
@@ -135,7 +141,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 if paddle.rect.topleft[1] > 10:
                     paddle.rect.y -= paddle.speed
 
-        #Test2
 
         # If the game is over, display the win message
         if lScore > 4 or rScore > 4:
@@ -186,8 +191,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         pygame.draw.rect(screen, WHITE, topWall)
         pygame.draw.rect(screen, WHITE, bottomWall)
         scoreRect = updateScore(lScore, rScore, screen, WHITE, scoreFont)
-
-        #pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
+        
+        #pygame.display.update([topWall, bottomWall, ball.rect, leftPaddle.rect, rightPaddle.rect, scoreRect, winMessage])
         pygame.display.update()
         clock.tick(60)
         
@@ -209,6 +214,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "PaddleY": playerPaddleObj.rect.y,
                 "paddleYMoving": playerPaddleObj.moving,
 
+                #opponent paddle
+                "OppPaddleY": opponentPaddleObj.rect.y,
+                "OppPaddleYMoving": opponentPaddleObj.moving,
+                
                 #ball location
                 "BallX": ball.rect.x,
                 "BallY": ball.rect.y,
@@ -242,6 +251,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 sync = updateData["sync"]
                 lScore = updateData["score"]["lScore"]
                 rScore = updateData["score"]["rScore"]
+
+                opponentPaddleObj.rect.y = updateData[oppPaddleDirection]["Y"]
+                opponentPaddleObj.moving = updateData[oppPaddleDirection]["Moving"]
 
 
 

@@ -45,7 +45,7 @@ gameStateLock = threading.Lock()        #prevent two threads from interlocking
 # I suggest you use the sync variable in pongClient.py to determine how out of sync your two
 # clients are and take actions to resync the games
 
-def handle_client(clientSocket, Paddle, shutdown, readyClients):
+def handle_client(clientSocket:socket.socket, Paddle: str, shutdown: threading.Event, readyClients: list[socket.socket]):
 
     print(f"Ready Clients: {readyClients}")
     print(f"Paddle: {Paddle}")
@@ -118,13 +118,13 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
 # Start server
 def initalize_server():
 
-    serverIP = "10.113.32.69"
+    serverIP = "10.113.32.126"
     port = 12321
 
     try:
             # Create a socket for the server
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            #server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
             print("Server started. Waiting on clients...")
 
@@ -166,23 +166,6 @@ def initalize_server():
                     clientSocket.sendall(initialData.encode())
                 except Exception as e:
                     print(f"Could not send initial data to client: {e}")
-                '''
-                bothReady = False
-
-                while (not bothReady):
-
-                    isClientGoodToGo = clientSocket.recv(1024)
-                    isClientGoodToGo = json.loads(isClientGoodToGo.decode())
-
-                    if isClientGoodToGo["key"] == "start":
-                        direction = isClientGoodToGo["Paddle"]
-                        gameState["ready"][direction] = True
-                    else:
-                        print(f"Server got a key that was NOT start, not sure why.")
-
-                    if (gameState["ready"]["left"] and gameState["ready"]["right"]):
-                        bothReady = True
-                   '''
 
 
 
