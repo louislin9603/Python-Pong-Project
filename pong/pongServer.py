@@ -49,11 +49,12 @@ def handle_client(clientSocket, Paddle, shutdown):
 
     print("Made it to 1")
     while not shutdown.is_set():
-        msg = clientSocket.recv()
+        data = clientSocket.recv(1024)
 
         #parse thoruhg received message
+        msg = json.loads(data.decode())
 
-
+        print(f"current data: {msg}")
         #if no message, break out of loop
         if msg is None:
             print('Error: No client message')
@@ -105,10 +106,8 @@ def handle_client(clientSocket, Paddle, shutdown):
             #what is going to happen is that the client is spam requesting to start,
             # when both are ready to start, then we can return True
 
-            #gameState["ready"]["left] = True
-            
-
-
+            gameState["ready"][Paddle] = True
+            print(f"{Paddle} has been updated to True")
             #if left and right are ready
             if (gameState["ready"]["left"] and gameState["ready"]["right"]):
             
@@ -127,7 +126,7 @@ def handle_client(clientSocket, Paddle, shutdown):
 # Start server
 def initalize_server():
 
-    serverIP = "10.113.33.94"
+    serverIP = "10.113.32.126"
     port = 12321
 
     try:
@@ -169,7 +168,8 @@ def initalize_server():
                 data = {
                     "screenheight": 400,
                     "screenwidth": 600,
-                    "playerPaddle": paddleHolder
+                    "playerPaddle": paddleHolder,
+                    "bothReady": False
                     }
 
                 try:
@@ -179,7 +179,7 @@ def initalize_server():
                     print(f"Could not send data as JSON: {e}")
 
                 # Create a thread for multiple clients
-                shutdown = clientSocket.set()       #This line may not work, delete if crashing randomly
+                shutdown = threading.Event()
                 client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown,))
                 client_handler.start()
                 threadHolder.append(client_handler)     #add client to array threadHolder
@@ -192,7 +192,6 @@ def initalize_server():
         print(f"error with initializing server: {e}")
     finally:
         server.close()
-        clientAddress.close()
         print("Server closing")
 
 

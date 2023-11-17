@@ -64,10 +64,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     sync = 0
 
     while True:
+
         # Wiping the screen
         screen.fill((0,0,0))
-        
-        pygame.display.flip()
         
         #Test1
         print("Cleaning the board")
@@ -200,7 +199,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
         try:
-
+            
+            #new game state update
             update_data = {
                "key": "grab"
                 }
@@ -262,11 +262,23 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
         initialData = json.loads(data.decode())
         screenHeight = initialData["screenheight"]
         screenWidth = initialData["screenwidth"]
-        playerPaddle = initialData["playerPaddle"]  
+        playerPaddle = initialData["playerPaddle"]
+        bothReady = initialData["bothReady"]  
     except Exception as e:
         print(f"Could not pull the initial data from the server, error: {e}")
 
-    # Close this window and start the game with the info passed to you from the server
+    requestToStart = {
+        "key": 'start'
+    }
+
+    elapsed_time = 0
+    # When bothReady == false
+    #while not bothReady and elapsed_time < 10:
+    #    time.sleep(1)
+    #    elapsed_time += 1
+    #    print("Waiting for clients")
+
+    # Close this window and start the game with the info passed to you from the server    
     app.withdraw()     # Hides the window (we'll kill it later)
     playGame(screenWidth, screenHeight, playerPaddle, client)  # User will be either left or right paddle
     print("Disconnected")
