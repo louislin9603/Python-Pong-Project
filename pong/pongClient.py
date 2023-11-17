@@ -236,6 +236,12 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
             except Exception as e:
                 print(f"Could not retrieve information from key grab: {e}")
+            if updateData["sync"] >= sync:
+                ball.rect.x = updateData["ball"]["X"]
+                ball.rect.y = updateData["ball"]["Y"]
+                sync = updateData["sync"]
+                lScore = updateData["score"]["lScore"]
+                rScore = updateData["score"]["rScore"]
 
 
 
