@@ -105,8 +105,9 @@ def handle_client(clientSocket, Paddle, shutdown):
             #what is going to happen is that the client is spam requesting to start,
             # when both are ready to start, then we can return True
 
-            #gameState["ready"]["left] = True
-            
+            #Turn this clients ready check to true
+            with gameStateLock:
+                gameState["ready"][Paddle] = True
 
 
             #if left and right are ready
@@ -166,17 +167,39 @@ def initalize_server():
                 # Test 
                 print(f"paddleholder = {paddleHolder}")
                 
+                
                 data = {
                     "screenheight": 400,
                     "screenwidth": 600,
-                    "playerPaddle": paddleHolder
+                    "playerPaddle": paddleHolder,
+                    "key": "initialData"
                     }
 
                 try:
                     initialData = json.dumps(data)
                     clientSocket.sendall(initialData.encode())
                 except Exception as e:
-                    print(f"Could not send data as JSON: {e}")
+                    print(f"Could not send initial data to client: {e}")
+                '''
+                bothReady = False
+
+                while (not bothReady):
+
+                    isClientGoodToGo = clientSocket.recv(1024)
+                    isClientGoodToGo = json.loads(isClientGoodToGo.decode())
+
+                    if isClientGoodToGo["key"] == "start":
+                        direction = isClientGoodToGo["Paddle"]
+                        gameState["ready"][direction] = True
+                    else:
+                        print(f"Server got a key that was NOT start, not sure why.")
+
+                    if (gameState["ready"]["left"] and gameState["ready"]["right"]):
+                        bothReady = True
+                   '''
+
+
+
 
                 # Create a thread for multiple clients
                 shutdown = clientSocket.set()       #This line may not work, delete if crashing randomly
@@ -192,7 +215,6 @@ def initalize_server():
         print(f"error with initializing server: {e}")
     finally:
         server.close()
-        clientAddress.close()
         print("Server closing")
 
 

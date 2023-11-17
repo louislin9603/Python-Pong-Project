@@ -260,11 +260,39 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     try:
         data = client.recv(1024)
         initialData = json.loads(data.decode())
-        screenHeight = initialData["screenheight"]
-        screenWidth = initialData["screenwidth"]
-        playerPaddle = initialData["playerPaddle"]  
+
+        if initialData["key"] == "initialData":
+            screenHeight = initialData["screenheight"]
+            screenWidth = initialData["screenwidth"]
+            playerPaddle = initialData["playerPaddle"] 
+            print(f"Retrieved initial data.")
+        else:
+            print(f"Client expected to be sent the initial data, instead got something else.")
+
     except Exception as e:
         print(f"Could not pull the initial data from the server, error: {e}")
+    
+    areWeGoodToGo = {
+        "key": "start",
+        "Paddle": playerPaddle
+    }
+    bothReady = False
+
+    print("Made it to the while loop")
+    while (not bothReady):
+        client.send(json.dumps(areWeGoodToGo).encode()) #ask server are we ready to start
+        print("Asked the server if we're ready to go.")
+
+        serverResponse = client.recv(1024)            
+        serverResponse = json.loads(serverResponse.decode())      #get response from server
+        print("We got a response from the server.")        
+        
+        #If both clients are ready to go, break out and play
+        if (serverResponse["ready"]["left"] and serverResponse["ready"]["right"]):
+            bothReady = True
+        
+    
+
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
