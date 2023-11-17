@@ -212,7 +212,22 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 print("Could not send the grab request to the server.")
 
             #client code that retrieves the gamestate
-            
+            try:  
+                endData = client.recv(1024)
+                endData = json.loads(endData.decode())
+            except:
+                print("Could not pull the end data from the server.")
+
+            ball.rect.x = endData["ball"]["X"]
+            print(f"Ball position at end of client: {ball.rect.x}")
+            ball.rect.y = endData["ball"]["Y"]
+            sync = endData["sync"]
+            lScore = endData["score"]["lScore"]
+            rScore = endData["score"]["rScore"]
+            #paddle.rect.y = endData["s"]
+
+
+
     
 
           
@@ -271,7 +286,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     except Exception as e:
         print(f"Could not pull the initial data from the server, error: {e}")
-    
+    '''
     areWeGoodToGo = {
         "key": "start",
         "Paddle": playerPaddle
@@ -291,7 +306,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
         if (serverResponse["ready"]["left"] and serverResponse["ready"]["right"]):
             bothReady = True
         
-    
+    '''
 
 
     # Close this window and start the game with the info passed to you from the server

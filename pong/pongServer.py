@@ -49,7 +49,10 @@ def handle_client(clientSocket, Paddle, shutdown):
 
     print("Made it to 1")
     while not shutdown.is_set():
-        msg = clientSocket.recv()
+        msg = clientSocket.recv(1024)
+        msg = json.loads(msg.decode())
+
+        print("Received a message from the client in handle_client")
 
         #parse thoruhg received message
 
@@ -84,7 +87,7 @@ def handle_client(clientSocket, Paddle, shutdown):
                 gameState[Paddle]["Y"] = msg["PaddleY"]     #update your paddle position
                 gameState[Paddle]["Moving"] = msg["paddleYMoving"] #update where you are moving it to
         
-        #if request is send
+        #if request is sent from the BOTTOM of the client code
         if msg['key'] == 'grab':
             # send back the gameState
             # Continue
@@ -202,7 +205,7 @@ def initalize_server():
 
 
                 # Create a thread for multiple clients
-                shutdown = clientSocket.set()       #This line may not work, delete if crashing randomly
+                shutdown = threading.Event()      #This line may not work, delete if crashing randomly
                 client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown,))
                 client_handler.start()
                 threadHolder.append(client_handler)     #add client to array threadHolder
