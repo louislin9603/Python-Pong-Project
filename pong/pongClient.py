@@ -61,16 +61,16 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     lScore = 0
     rScore = 0
 
-    sync = 0
+    sync = 1
 
     while True:
         # Wiping the screen
         screen.fill((0,0,0))
         
-        pygame.display.flip()
+        #pygame.display.flip()
         
         #Test1
-        print("Cleaning the board")
+        #print("Cleaning the board")
 
         # Getting keypress events
         for event in pygame.event.get():
@@ -105,6 +105,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "BallX": ball.rect.x,
                 "BallY": ball.rect.y,
 
+                #ball velocity
+                "ballxVel": ball.xVel,
+                "ballyVel": ball.yVel,
+
                 #Score
                 "lScore": lScore,
                 "rScore": rScore,
@@ -122,10 +126,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             updateData = json.dumps(update_data)
             client.send(updateData.encode())
         except Exception as e:
-            print(f"Could not send data as JSON to server: {e}")
+            print(f"Could not send (middle client) data as JSON to server: {e}")
 
-    
-        
         # =========================================================================================
 
         # Update the player paddle and opponent paddle's location on the screen
@@ -190,7 +192,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         scoreRect = updateScore(lScore, rScore, screen, WHITE, scoreFont)
         pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
         clock.tick(60)
-        
+        #print(f"Left Paddle, right paddle, ball: {leftPaddle} and {rightPaddle} and {ball}")
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
@@ -201,15 +203,26 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # opponent's game
         try:
 
-            update_data = {
+            keyGrab = {
                "key": "grab"
                 }
             
             try:
-                updateServer = json.dumps(update_data)
+                updateServer = json.dumps(keyGrab)
                 client.send(updateServer.encode())
             except:
                 print("Could not send the grab request to the server.")
+
+
+
+
+
+            #assign the direction of the other paddle
+            if playerPaddle == "left":
+                otherPaddle = "right"
+            else:
+                otherPaddle = "left"
+
 
             #client code that retrieves the gamestate
             try:  
@@ -217,16 +230,23 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 endData = json.loads(endData.decode())
             except:
                 print("Could not pull the end data from the server.")
-
-            ball.rect.x = endData["ball"]["X"]
-            print(f"Ball position at end of client: {ball.rect.x}")
-            ball.rect.y = endData["ball"]["Y"]
+            print(f"What is being sent by server as 'gameState': {endData}")
+            #ball.rect.x = endData["ball"]["X"]
+            #ball.rect.y = endData["ball"]["Y"]
+            ball.xVel = endData["ball"]["ballxVel"]
+            ball.yVel = endData["ball"]["ballyVel"]
             sync = endData["sync"]
             lScore = endData["score"]["lScore"]
             rScore = endData["score"]["rScore"]
-            #paddle.rect.y = endData["s"]
+        
+            try:
+                #opponentPaddleObj.rect = endData[otherPaddle]["Y"]
+                #opponentPaddleObj.moving = endData[otherPaddle]["Moving"]
+                pass
+            except:
+                print("Isaiah Huffman your moron equivalency didn't work")
 
-
+            #player paddle is passed as an argument
 
     
 

@@ -29,6 +29,8 @@ gameState = {
     "ball": {
         "X":0,
         "Y":0,
+        "ballxVel":0,
+        "ballyVel":0
     },
     "ready": {
         "left": False,
@@ -46,7 +48,7 @@ gameStateLock = threading.Lock()        #prevent two threads from interlocking
 # clients are and take actions to resync the games
 
 def handle_client(clientSocket, Paddle, shutdown):
-
+    global gameState, gameStateLock
     print("Made it to 1")
     while not shutdown.is_set():
         msg = clientSocket.recv(1024)
@@ -76,15 +78,16 @@ def handle_client(clientSocket, Paddle, shutdown):
                 with gameStateLock:
                     gameState["ball"]["X"] = msg["BallX"]
                     gameState["ball"]["Y"] = msg["BallY"]
+                    gameState["ball"]["ballxVel"] = msg["ballxVel"]
+                    gameState["ball"]["ballyVel"] = msg["ballyVel"]
                     gameState["score"]["lScore"] = msg["lScore"]
                     gameState["score"]["rScore"] = msg["rScore"]
 
             
             # Irrespective if sync is greater or not, update the paddle info
             # Continue
-            #I need to figure out how to determine how to interpret paddle data so I put it in the right spot
             with gameStateLock:
-                gameState[Paddle]["Y"] = msg["PaddleY"]     #update your paddle position
+                gameState[Paddle]["Y"] = msg["PaddleY"]     #update the paddle position
                 gameState[Paddle]["Moving"] = msg["paddleYMoving"] #update where you are moving it to
         
         #if request is sent from the BOTTOM of the client code
