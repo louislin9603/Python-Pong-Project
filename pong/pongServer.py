@@ -118,7 +118,7 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
 # Start server
 def initalize_server():
 
-    serverIP = "10.113.32.69"
+    serverIP = "10.113.33.94"
     port = 12321
 
     try:

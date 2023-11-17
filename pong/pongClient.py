@@ -54,9 +54,11 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
     ball = Ball(pygame.Rect(screenWidth/2, screenHeight/2, 5, 5), -5, 0)
 
+    oppPaddleDirection = "left"
     if playerPaddle == "left":
         opponentPaddleObj = rightPaddle
         playerPaddleObj = leftPaddle
+        oppPaddleDirection = "right"
     else:
         opponentPaddleObj = leftPaddle
         playerPaddleObj = rightPaddle
@@ -242,7 +244,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 sync = updateData["sync"]
                 lScore = updateData["score"]["lScore"]
                 rScore = updateData["score"]["rScore"]
-
+                
+                opponentPaddleObj.rect.y = updateData[oppPaddleDirection]["Y"]
+                opponentPaddleObj.moving= updateData[oppPaddleDirection]["Moving"]
+        
 
 
         except Exception as e:
