@@ -21,6 +21,9 @@ from assets.code.helperCode import *
 # to suit your needs.
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
+    time.sleep(2)
+    print("Game is starting...")
+
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
@@ -67,9 +70,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         # Wiping the screen
         screen.fill((0,0,0))
-        
-        #Test1
-        print("Cleaning the board")
 
         # Getting keypress events
         for event in pygame.event.get():
@@ -91,7 +91,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
         
-        #Getting the current paddle information
+        #Getting the current paddle information and sending it to the server
         try:
             key = "middleClient"        #Cause we're in the middle of the client
             update_data = {
@@ -99,7 +99,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "PaddleY": playerPaddleObj.rect.y,
                 "paddleYMoving": playerPaddleObj.moving,
 
-            
                 #ball location
                 "BallX": ball.rect.x,
                 "BallY": ball.rect.y,
@@ -116,7 +115,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         except:
             print("Could not pull paddle information to send to server, its FUBAR")
         
-        #Send the request to pull paddle information right here.
+        #Sending to the server
         try:
             updateData = json.dumps(update_data)
             client.send(updateData.encode())
@@ -187,7 +186,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         pygame.draw.rect(screen, WHITE, topWall)
         pygame.draw.rect(screen, WHITE, bottomWall)
         scoreRect = updateScore(lScore, rScore, screen, WHITE, scoreFont)
-        pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
+
+        #pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
+        pygame.display.update()
         clock.tick(60)
         
         # This number should be synchronized between you and your opponent.  If your number is larger
@@ -195,27 +196,48 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # catch up (use their info)
         sync += 1
         
+        print(f"{sync}")
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
         try:
             
-            #new game state update
+            #request to retrieve data using key "grab"
+            key = "grab"
             update_data = {
-               "key": "grab"
+               #player paddle
+                "PaddleY": playerPaddleObj.rect.y,
+                "paddleYMoving": playerPaddleObj.moving,
+
+                #ball location
+                "BallX": ball.rect.x,
+                "BallY": ball.rect.y,
+
+                #Score
+                "lScore": lScore,
+                "rScore": rScore,
+
+                "key": "grab",
+
+                #current sync number
+                "sync": sync
                 }
             
             try:
                 updateServer = json.dumps(update_data)
                 client.send(updateServer.encode())
-            except:
-                print("Could not send the grab request to the server.")
-
+            except Exception as e:
+                print("Could not send the grab request to the server: {e}")
+           
             #client code that retrieves the gamestate
-            
-    
+            try: 
+                msg = client.recv(1024)
+                updateData = json.loads(msg.decode())
 
-          
+            except Exception as e:
+                print(f"Could not retrieve information from key grab: {e}")
+
+
 
         except Exception as e:
             print(f"Error receiving server update: {e}")
@@ -260,29 +282,59 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     try:
         data = client.recv(1024)
         initialData = json.loads(data.decode())
-        screenHeight = initialData["screenheight"]
-        screenWidth = initialData["screenwidth"]
-        playerPaddle = initialData["playerPaddle"]
-        bothReady = initialData["bothReady"]  
+
+        if initialData["key"] == "initialData":
+            screenHeight = initialData["screenheight"]
+            screenWidth = initialData["screenwidth"]
+            playerPaddle = initialData["playerPaddle"] 
+            print(f"Retrieved initial data.")
+        else:
+            print(f"Client expected to be sent the initial data, instead got something else.")
+
     except Exception as e:
         print(f"Could not pull the initial data from the server, error: {e}")
 
-    requestToStart = {
-        "key": 'start'
-    }
+    #Notify the server that the client is ready to play
+    client.send(json.dumps({"key": "ready"}).encode())
 
-    elapsed_time = 0
-    # When bothReady == false
-    #while not bothReady and elapsed_time < 10:
-    #    time.sleep(1)
-    #    elapsed_time += 1
-    #    print("Waiting for clients")
-
+    #Wait for both clients to be ready
+    try:
+        while True:
+            data = client.recv(1024)
+            message = json.loads(data.decode())
+            if message["key"] == "startGame":
+                break
+    except Exception as e:
+        print(f"Error waiting for both clients: {e}")
+    
     # Close this window and start the game with the info passed to you from the server    
     app.withdraw()     # Hides the window (we'll kill it later)
     playGame(screenWidth, screenHeight, playerPaddle, client)  # User will be either left or right paddle
     print("Disconnected")
     app.quit()         # Kills the window
+
+    '''
+    areWeGoodToGo = {
+        "key": "start",
+        "Paddle": playerPaddle
+    }
+    bothReady = False
+
+    print("Made it to the while loop")
+    while (not bothReady):
+        client.send(json.dumps(areWeGoodToGo).encode()) #ask server are we ready to start
+        print("Asked the server if we're ready to go.")
+
+        serverResponse = client.recv(1024)            
+        serverResponse = json.loads(serverResponse.decode())      #get response from server
+        print("We got a response from the server.")        
+        
+        #If both clients are ready to go, break out and play
+        if (serverResponse["ready"]["left"] and serverResponse["ready"]["right"]):
+            bothReady = True
+    '''
+
+    
 
 
 

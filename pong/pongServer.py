@@ -45,24 +45,23 @@ gameStateLock = threading.Lock()        #prevent two threads from interlocking
 # I suggest you use the sync variable in pongClient.py to determine how out of sync your two
 # clients are and take actions to resync the games
 
-def handle_client(clientSocket, Paddle, shutdown):
+def handle_client(clientSocket, Paddle, shutdown, readyClients):
 
-    print("Made it to 1")
+    print(f"Ready Clients: {readyClients}")
+    print(f"Paddle: {Paddle}")
     while not shutdown.is_set():
         data = clientSocket.recv(1024)
 
         #parse thoruhg received message
         msg = json.loads(data.decode())
-
-        print(f"current data: {msg}")
+        
         #if no message, break out of loop
         if msg is None:
             print('Error: No client message')
             shutdown.set()          
             continue
-        
     
-
+        
         #if message received by client == key (middleClient, start, or grab)
         if msg['key'] == 'middleClient':
         
@@ -72,6 +71,7 @@ def handle_client(clientSocket, Paddle, shutdown):
 
             if msg['sync'] > gameState['sync']:
                 with gameStateLock:
+                    gameState["sync"] = msg["sync"]
                     gameState["ball"]["X"] = msg["BallX"]
                     gameState["ball"]["Y"] = msg["BallY"]
                     gameState["score"]["lScore"] = msg["lScore"]
@@ -89,15 +89,16 @@ def handle_client(clientSocket, Paddle, shutdown):
         if msg['key'] == 'grab':
             # send back the gameState
             # Continue
+        
             try:
-                clientSocket.sendall(json.dumps(gameState).encode())
+                updateData = json.dumps(gameState)
+                clientSocket.send(updateData.encode())
             except Exception as e:
                 print(f"Could not send the frame update to the client: {e}")
 
 
-
         #if request is start
-        if msg['key'] == 'start':
+        if msg["key"] == "ready":
 
             # Set the left and right as ready (depending on which one they are)
             # If both left and right are ready then return a start as 'True'
@@ -106,20 +107,11 @@ def handle_client(clientSocket, Paddle, shutdown):
             #what is going to happen is that the client is spam requesting to start,
             # when both are ready to start, then we can return True
 
-            gameState["ready"][Paddle] = True
-            print(f"{Paddle} has been updated to True")
-            #if left and right are ready
-            if (gameState["ready"]["left"] and gameState["ready"]["right"]):
+            readyClients.append(clientSocket)
+            if len(readyClients) == 2:
+                for client in readyClients:
+                    client.send(json.dumps({"key":"startGame"}).encode())
             
-                #send True
-                with gameStateLock:
-                    gameState["ready"]["left"] = True
-                    gameState["ready"]["right"] = True
-                clientSocket.send(json.dumps(gameState).encode())
-            else:
-
-                #send False
-                clientSocket.send(json.dumps(gameState).encode())
 
 
 
@@ -138,7 +130,7 @@ def initalize_server():
 
             # Bind to the port
             server.bind((serverIP, port))
-            server.listen()
+            server.listen(2)
             print(f"Listening on {serverIP}: {port}")     #Waiting for connections
 
             #Initalize player(s)
@@ -146,13 +138,12 @@ def initalize_server():
             paddleHolder = "left"
 
             threadHolder = []           #place clients into here to iteratively join when closing
+            readyClients = []
             while noOfClients < 2:
                 # Accepts a client from the connection
                 clientSocket, clientAddress = server.accept()
 
                 print(f"Accepted connection from {clientAddress[0]}:{clientAddress[1]}")
-
-                
 
                 # Determine current player paddle position
                 if noOfClients == 0:        #Player 1
@@ -161,26 +152,44 @@ def initalize_server():
                     paddleHolder = "right"
                 #else:
                     #more than two players, maybe have them wait without crashing
-
-                # Test 
-                print(f"paddleholder = {paddleHolder}")
+                
                 
                 data = {
                     "screenheight": 400,
                     "screenwidth": 600,
                     "playerPaddle": paddleHolder,
-                    "bothReady": False
+                    "key": "initialData" 
                     }
 
                 try:
                     initialData = json.dumps(data)
                     clientSocket.sendall(initialData.encode())
                 except Exception as e:
-                    print(f"Could not send data as JSON: {e}")
+                    print(f"Could not send initial data to client: {e}")
+                '''
+                bothReady = False
+
+                while (not bothReady):
+
+                    isClientGoodToGo = clientSocket.recv(1024)
+                    isClientGoodToGo = json.loads(isClientGoodToGo.decode())
+
+                    if isClientGoodToGo["key"] == "start":
+                        direction = isClientGoodToGo["Paddle"]
+                        gameState["ready"][direction] = True
+                    else:
+                        print(f"Server got a key that was NOT start, not sure why.")
+
+                    if (gameState["ready"]["left"] and gameState["ready"]["right"]):
+                        bothReady = True
+                   '''
+
+
+
 
                 # Create a thread for multiple clients
                 shutdown = threading.Event()
-                client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown,))
+                client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown, readyClients))
                 client_handler.start()
                 threadHolder.append(client_handler)     #add client to array threadHolder
                 noOfClients += 1                        #increase client[i]
