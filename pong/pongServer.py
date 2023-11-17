@@ -12,7 +12,7 @@ import sys
 import json
 import uuid
 
-
+# Global dictionary that our two clients access.
 gameState = {
     "left": {
         "Y":0,
@@ -36,14 +36,12 @@ gameState = {
     },
     "sync":0
 }
-gameStateLock = threading.Lock()        #prevent two threads from interlocking
 
-# Use this file to write your server logic
-# You will need to support at least two clients
-# You will need to keep track of where on the screen (x,y coordinates) each paddle is, the score 
-# for each player and where the ball is, and relay that to each client
-# I suggest you use the sync variable in pongClient.py to determine how out of sync your two
-# clients are and take actions to resync the games
+# Our thread lock, which we use to prevent unnecessary nonsense from happening when our threaded clients try...
+# ...and access the global dictionary gameState, whose initialization is located above.
+gameStateLock = threading.Lock()        
+
+
 
 def handle_client(clientSocket, Paddle, shutdown, readyClients):
 
@@ -97,16 +95,10 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
                 print(f"Could not send the frame update to the client: {e}")
 
 
-        #if request is start
+        # If the clients are asking to start the game
         if msg["key"] == "ready":
 
-            # Set the left and right as ready (depending on which one they are)
-            # If both left and right are ready then return a start as 'True'
-            # otherwise return 'False' in the send back          
-            
-            #what is going to happen is that the client is spam requesting to start,
-            # when both are ready to start, then we can return True
-
+        
             readyClients.append(clientSocket)
             if len(readyClients) == 2:
                 for client in readyClients:
@@ -116,16 +108,18 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
 
 
 # Start server
-def initalize_server():
+def initialize_server():
 
+    # IMPORTANT, whoever is hosting the server needs to understand their IP address and put it into this string here.
+    # We pulled our IP addresses by going into (Windows 10) command prompt and typing "ipconfig/all"
+    # We only ever used IPv4 address.
     serverIP = "10.113.33.94"
     port = 12321
 
     try:
             # Create a socket for the server
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
             print("Server started. Waiting on clients...")
 
             # Bind to the port
@@ -135,14 +129,16 @@ def initalize_server():
 
             #Initalize player(s)
             noOfClients = 0             #number of clients connected
-            paddleHolder = "left"
+            paddleHolder = "left"       #What side the user is on
 
-            threadHolder = []           #place clients into here to iteratively join when closing
-            readyClients = []
+            threadHolder = []           #place clients into here to iteratively close when done
+            readyClients = []           #array of clients that are ready
+
+            # Loop where we connect to the two clients.
             while noOfClients < 2:
+
                 # Accepts a client from the connection
                 clientSocket, clientAddress = server.accept()
-
                 print(f"Accepted connection from {clientAddress[0]}:{clientAddress[1]}")
 
                 # Determine current player paddle position
@@ -150,10 +146,9 @@ def initalize_server():
                     paddleHolder = "left"
                 elif noOfClients == 1:      #Player 2
                     paddleHolder = "right"
-                #else:
-                    #more than two players, maybe have them wait without crashing
                 
                 
+                #JSON that holds the initial data to send to the clients
                 data = {
                     "screenheight": 400,
                     "screenwidth": 600,
@@ -161,39 +156,24 @@ def initalize_server():
                     "key": "initialData" 
                     }
 
+                #Send initial data to the client
                 try:
                     initialData = json.dumps(data)
                     clientSocket.sendall(initialData.encode())
                 except Exception as e:
                     print(f"Could not send initial data to client: {e}")
-                '''
-                bothReady = False
-
-                while (not bothReady):
-
-                    isClientGoodToGo = clientSocket.recv(1024)
-                    isClientGoodToGo = json.loads(isClientGoodToGo.decode())
-
-                    if isClientGoodToGo["key"] == "start":
-                        direction = isClientGoodToGo["Paddle"]
-                        gameState["ready"][direction] = True
-                    else:
-                        print(f"Server got a key that was NOT start, not sure why.")
-
-                    if (gameState["ready"]["left"] and gameState["ready"]["right"]):
-                        bothReady = True
-                   '''
-
-
-
-
-                # Create a thread for multiple clients
+                
+                # Passed to the client handler, enables us to shutdown if funny business happens with the threads
                 shutdown = threading.Event()
+
+                # Use threads to enable server to handle both clients simultaneously.
                 client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown, readyClients))
                 client_handler.start()
-                threadHolder.append(client_handler)     #add client to array threadHolder
-                noOfClients += 1                        #increase client[i]
+                threadHolder.append(client_handler)     # add client to array threadHolder
+                noOfClients += 1                        # increment number of clients
 
+            # "We're done here, shut it down and let's go home."
+            # Close the server and the client sockets.
             server.close()
             for client in threadHolder:
                 client.join() 
@@ -204,11 +184,13 @@ def initalize_server():
         print("Server closing")
 
 
+
+# What actually starts the server
 if __name__ == "__main__":
    
     # Initalize server
     try:
-        initalize_server()
+        initialize_server()
     except KeyboardInterrupt: 
         print("Ctrl C - Stopping Server")
         sys.exit(1)

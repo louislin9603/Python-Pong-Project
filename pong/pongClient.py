@@ -1,8 +1,8 @@
 # =================================================================================================
-# Contributing Authors:	    <Anyone who touched the code>
-# Email Addresses:          <Your uky.edu email addresses>
-# Date:                     <The date the file was last edited>
-# Purpose:                  <How this file contributes to the project>
+# Contributing Authors:	    Isaiah Huffman, Louis Lin, Gyunghyun Moon
+# Email Addresses:          irhu224@uky.edu, lli241@uky.edu, gmo239@uky.edu
+# Date:                     11/17/2023
+# Purpose:                  This is the client code file.
 # Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
 
@@ -191,6 +191,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         #pygame.display.update([topWall, bottomWall, ball, leftPaddle, rightPaddle, scoreRect, winMessage])
         pygame.display.update()
+        #pygame.display.flip()
         clock.tick(60)
         
         # This number should be synchronized between you and your opponent.  If your number is larger
@@ -205,6 +206,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         try:
             
             #request to retrieve data using key "grab"
+            
             key = "grab"
             update_data = {
                #player paddle
@@ -324,27 +326,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     print("Disconnected")
     app.quit()         # Kills the window
 
-    '''
-    areWeGoodToGo = {
-        "key": "start",
-        "Paddle": playerPaddle
-    }
-    bothReady = False
-
-    print("Made it to the while loop")
-    while (not bothReady):
-        client.send(json.dumps(areWeGoodToGo).encode()) #ask server are we ready to start
-        print("Asked the server if we're ready to go.")
-
-        serverResponse = client.recv(1024)            
-        serverResponse = json.loads(serverResponse.decode())      #get response from server
-        print("We got a response from the server.")        
-        
-        #If both clients are ready to go, break out and play
-        if (serverResponse["ready"]["left"] and serverResponse["ready"]["right"]):
-            bothReady = True
-    '''
-
+   
     
 
 
