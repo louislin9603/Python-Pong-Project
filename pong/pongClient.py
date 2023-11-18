@@ -2,8 +2,8 @@
 # Contributing Authors:	    Isaiah Huffman, Louis Lin, Gyunghyun Moon
 # Email Addresses:          irhu224@uky.edu, lli241@uky.edu, gmo239@uky.edu
 # Date:                     11/17/2023
-# Purpose:                  This is the client code file.
-# Misc:                     <Not Required.  Anything else you might want to include>
+# Purpose:                  This is the client code file. Connect to the server and run the game loop.
+# Misc:                     Do not be shocked by the sync number spamming your terminal while playing the game. We're proud of it.
 # =================================================================================================
 
 import pygame
@@ -16,11 +16,13 @@ import threading
 
 from assets.code.helperCode import *
 
-# This is the main game loop.  For the most part, you will not need to modify this.  The sections
-# where you should add to the code are marked.  Feel free to change any part of this project
-# to suit your needs.
+# Author:        Isaiah Huffman and Louis Lin and Gyunghyun Moon
+# Purpose:       Main gameplay loop that hosts the game logic and communicates with server (send and pull paddle/ball location, etc.)
+# Pre:           Must have already established connection with server.
+# Post:          This is the final function users enter; the game ends after this.
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
     
+    # Give the users a couple seconds to process that the game is about to start.
     time.sleep(2)
     print("Game is starting")
     
@@ -117,7 +119,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         except:
             print("Could not pull paddle information to send to server, its FUBAR")
         
-        #Sending to the server
+        #Send our game information to the server
         try:
             updateData = json.dumps(update_data)
             client.send(updateData.encode())
@@ -199,14 +201,15 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # catch up (use their info)
         sync += 1
         
+        #You can comment this out, it was nice to have as a debugging tool though. Also satisfying.
         print(f"{sync}")
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
         try:
             
-            #request to retrieve data using key "grab"
             
+            # Request to receive update from the server, but simultaneously send our game state as well.
             key = "grab"
             update_data = {
                #player paddle
@@ -227,19 +230,21 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 "sync": sync
                 }
             
+            # Send out the game state
             try:
                 updateServer = json.dumps(update_data)
                 client.send(updateServer.encode())
             except Exception as e:
                 print("Could not send the grab request to the server: {e}")
            
-            #client code that retrieves the gamestate
+            # Wait for server response with most updated game state
             try: 
                 msg = client.recv(1024)
                 updateData = json.loads(msg.decode())
-
             except Exception as e:
                 print(f"Could not retrieve information from key grab: {e}")
+
+            # Update game state (if necessary) with info from server
             if updateData["sync"] >= sync:
                 ball.rect.x = updateData["ball"]["X"]
                 ball.rect.y = updateData["ball"]["Y"]
@@ -247,8 +252,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 lScore = updateData["score"]["lScore"]
                 rScore = updateData["score"]["rScore"]
                 
-                opponentPaddleObj.rect.y = updateData[oppPaddleDirection]["Y"]
-                opponentPaddleObj.moving= updateData[oppPaddleDirection]["Moving"]
+            # Regardless of whether or not our sync is lower, update enemy game paddle
+            opponentPaddleObj.rect.y = updateData[oppPaddleDirection]["Y"]
+            opponentPaddleObj.moving= updateData[oppPaddleDirection]["Moving"]
         
 
 
@@ -263,9 +269,15 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 # the screen width, height and player paddle (either "left" or "right")
 # If you want to hard code the screen's dimensions into the code, that's fine, but you will need to know
 # which client is which
+
+
+# Author:        Isaiah Huffman and Louis Lin and Gyunghyun Moon
+# Purpose:       Main gameplay loop that hosts the game logic and communicates with server (send and pull paddle/ball location, etc.)
+# Pre:           Must have already established connection with server.
+# Post:          This is the final function users enter; the game ends after this.
 def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Purpose:      This method is fired when the join button is clicked
-    # Arguments:
+    # Arguments:    
     # ip            A string holding the IP address of the server
     # port          A string holding the port the server is using
     # errorLabel    A tk label widget, modify it's text to display messages to the user (example below)
@@ -332,6 +344,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
 
 # This displays the opening screen, you don't need to edit this (but may if you like)
+# This function was given, the only thing we modified is the join button (it's now threaded) so it doesn't crash.
 def startScreen():
     app = tk.Tk()
     app.title("Server Info")
@@ -356,14 +369,17 @@ def startScreen():
     errorLabel = tk.Label(text="")
     errorLabel.grid(column=0, row=4, columnspan=2)
 
-    
+    # I found that if I didn't thread this, then the join button would crash.
     button_handler = threading.Thread(target=joinGame, args=(app, ipEntry, portEntry, errorLabel))
     button_handler.start()   
      
     app.mainloop()   
 
 
-
+# Author:        Louis Lin and Gyunghyun Moon
+# Purpose:       "Spawn" the join button on the user's screen so they can type in the server IP address and port
+# Pre:           User must have internet connection, must know the server IP address and port, probably needs to be connected to UK VPN 
+# Post:          User has GUI join button pop up that prompts them for IP address and port.
 def joinGame(app, ipEntry, portEntry, errorLabel):
     joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
     joinButton.grid(column=0, row=3, columnspan=2) 

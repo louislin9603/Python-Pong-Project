@@ -1,18 +1,20 @@
 # =================================================================================================
-# Contributing Authors:	    <Anyone who touched the code>
-# Email Addresses:          <Your uky.edu email addresses>
-# Date:                     <The date the file was last edited>
-# Purpose:                  <How this file contributes to the project>
-# Misc:                     <Not Required.  Anything else you might want to include>
+# Contributing Authors:	    Isaiah Huffman, Louis Lin, Gyunghyun Moon
+# Email Addresses:          irhu224@uky.edu, lli241@uky.edu, gmo239@uky.edu
+# Date:                     11/17/2023
+# Purpose:                  This is the server code file. Host the server using this, feed the connecting clients appropriate information.
+# Misc:                     For this code to work, you must determine your IP address (more info in initialize_server() 
+#                           and manually type it into the serverIP string on line 125
 # =================================================================================================
+
 
 import socket
 import threading
 import sys
 import json
-import uuid
 
-# Global dictionary that our two clients access.
+
+# Global dictionary that our two clients access. All the information of the game frame is stored here.
 gameState = {
     "left": {
         "Y":0,
@@ -43,24 +45,29 @@ gameStateLock = threading.Lock()
 
 
 
-def handle_client(clientSocket, Paddle, shutdown, readyClients):
+# Author:        Isaiah Huffman and Louis Lin and Gyunghyun Moon
+# Purpose:       Threaded function that enables the server to handle both clients at once.
+# Pre:           This function expects that both clients are connected to the server. 
+# Post:          The server shuts down after this function is over; the only post-condition is that the...
+                 #...users had fun
+def handle_client(clientSocket:socket.socket, Paddle:str, shutdown:threading.Event, readyClients:list[socket.socket]) -> None:
 
     print(f"Ready Clients: {readyClients}")
     print(f"Paddle: {Paddle}")
     while not shutdown.is_set():
-        data = clientSocket.recv(1024)
 
-        #parse thoruhg received message
+        #Pull message from client, read it.
+        data = clientSocket.recv(1024)
         msg = json.loads(data.decode())
         
-        #if no message, break out of loop
+        # If no message, let the server know, because it's a problem.
         if msg is None:
             print('Error: No client message')
             shutdown.set()          
             continue
     
         
-        #if message received by client == key (middleClient, start, or grab)
+        # If the key in the received JSON file indicates that the client is in the middle of its functional loop
         if msg['key'] == 'middleClient':
         
             # Compare the msg['sync'] against gameState['sync']
@@ -77,17 +84,15 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
 
             
             # Irrespective if sync is greater or not, update the paddle info
-            # Continue
-            #I need to figure out how to determine how to interpret paddle data so I put it in the right spot
             with gameStateLock:
                 gameState[Paddle]["Y"] = msg["PaddleY"]     #update your paddle position
                 gameState[Paddle]["Moving"] = msg["paddleYMoving"] #update where you are moving it to
         
-        #if request is send
+        # If the client wants to quickly grab the gamestate.
         if msg['key'] == 'grab':
+        
             # send back the gameState
             # Continue
-        
             try:
                 updateData = json.dumps(gameState)
                 clientSocket.send(updateData.encode())
@@ -98,17 +103,21 @@ def handle_client(clientSocket, Paddle, shutdown, readyClients):
         # If the clients are asking to start the game
         if msg["key"] == "ready":
 
-        
-            readyClients.append(clientSocket)
-            if len(readyClients) == 2:
-                for client in readyClients:
+            
+            readyClients.append(clientSocket)   # Add the client that says its ready into an array
+            if len(readyClients) == 2:          # If we have two clients connected
+                for client in readyClients:     # Send the clients the "you're good to start" message
                     client.send(json.dumps({"key":"startGame"}).encode())
             
 
 
+# Author:        Isaiah Huffman and Louis Lin
+# Purpose:       Start the server, listen for clients to connect. Begin the game (the game is handled in handle_client, above)
+# Pre:           It expects the user will input the IP address on the first try. Also, only two clients can connect.
+# Post:          Threads and calls the function (handle_client) that actually deals with the gameloop of the client.
 
 # Start server
-def initialize_server():
+def initialize_server() -> None:
 
     # IMPORTANT, whoever is hosting the server needs to understand their IP address and put it into this string here.
     # We pulled our IP addresses by going into (Windows 10) command prompt and typing "ipconfig/all"
@@ -119,7 +128,7 @@ def initialize_server():
     try:
             # Create a socket for the server
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+            #server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
             print("Server started. Waiting on clients...")
 
             # Bind to the port
@@ -165,7 +174,8 @@ def initialize_server():
                 
                 # Passed to the client handler, enables us to shutdown if funny business happens with the threads
                 shutdown = threading.Event()
-
+                print(f"shutdown: ")
+                print(type(shutdown))
                 # Use threads to enable server to handle both clients simultaneously.
                 client_handler = threading.Thread(target=handle_client, args=(clientSocket, paddleHolder, shutdown, readyClients))
                 client_handler.start()
