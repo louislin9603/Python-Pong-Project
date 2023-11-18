@@ -271,10 +271,10 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 # which client is which
 
 
-# Author:        Isaiah Huffman and Louis Lin and Gyunghyun Moon
-# Purpose:       Main gameplay loop that hosts the game logic and communicates with server (send and pull paddle/ball location, etc.)
-# Pre:           Must have already established connection with server.
-# Post:          This is the final function users enter; the game ends after this.
+# Authors:       Isaiah Huffman and Louis Lin and Gyunghyun Moon (based off code given by our wonderful TA Alexander Barrera)
+# Purpose:       Establish connection with the server
+# Pre:           User must have input the correct server IP and port into the GUI that popped up.
+# Post:          Go into the main gameplay loop.
 def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Purpose:      This method is fired when the join button is clicked
     # Arguments:    
@@ -287,13 +287,11 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
 
     serverIP = ip
-    # Connection to the server
 
+    #Create a socket and connect to the server, information pulled from arguments passed onto function (user puts in IP info in GUI popup)
     try:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((serverIP, int(port)))
-        
-        # Connected
         print(f"A connection has been made with IP: {serverIP}:{port}")
           
     except Exception as e:
@@ -308,6 +306,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
         data = client.recv(1024)
         initialData = json.loads(data.decode())
 
+        #Server sends us initial data. We only expect to be sent the initial data by this point.
         if initialData["key"] == "initialData":
             screenHeight = initialData["screenheight"]
             screenWidth = initialData["screenwidth"]
@@ -345,7 +344,7 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
 # This displays the opening screen, you don't need to edit this (but may if you like)
 # This function was given, the only thing we modified is the join button (it's now threaded) so it doesn't crash.
-def startScreen():
+def startScreen() -> threading:
     app = tk.Tk()
     app.title("Server Info")
 
@@ -380,7 +379,7 @@ def startScreen():
 # Purpose:       "Spawn" the join button on the user's screen so they can type in the server IP address and port
 # Pre:           User must have internet connection, must know the server IP address and port, probably needs to be connected to UK VPN 
 # Post:          User has GUI join button pop up that prompts them for IP address and port.
-def joinGame(app, ipEntry, portEntry, errorLabel):
+def joinGame(app:tk.Tk, ipEntry:str, portEntry:str, errorLabel:tk.Label) -> None:
     joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
     joinButton.grid(column=0, row=3, columnspan=2) 
 
