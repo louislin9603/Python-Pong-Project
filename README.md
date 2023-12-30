@@ -1,13 +1,17 @@
 # Python-Pong-Project
-2D Singleplayer or Multiplayer Pong game using Socket programming TCP client/server
+2D Singleplayer or Multiplayer Pong game using Socket programming TCP client/server \
+Note: Ensure git, python, and pip3 are properly installed 
 
 ## Creating and Running
+Go to a desired folder
 ```bash
 cd College/Python
+```
+```
 git clone git@github.com:louislin9603/Python-Pong-Project.git
+cd .\Python-Pong-Project\
 pip3 install -r requirements.txt
 ```
-
 
 Contact Info
 ============
@@ -45,3 +49,13 @@ Known Bugs
 - Say client 1 is the first client to connect to the server. If client 1’s process stops before the second client has the opportunity to join, then the server will break and must be reset.
 
 
+=======
+### Result of the pip3
+```bash
+Collecting pygame==2.5.2 (from -r requirements.txt (line 1))
+  Downloading pygame-2.5.2-cp312-cp312-win_amd64.whl.metadata (13 kB)
+Downloading pygame-2.5.2-cp312-cp312-win_amd64.whl (10.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 10.1 MB/s eta 0:00:00
+Installing collected packages: pygame
+Successfully installed pygame-2.5.2
+```
