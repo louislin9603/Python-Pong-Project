@@ -43,8 +43,7 @@ Run the following line to install the required libraries for this project:
 
 Known Bugs
 ==========
-- The server doesn't work because the logic isn't yet written.
-- The client doesn't speak to the server
+- Synchronization issues may occur depending on the connection speed and device.
 - If the player runs the client code and does not input the server’s IP address and port accurately, the client code will crash.
 - Say client 1 is the first client to connect to the server. If client 1’s process stops before the second client has the opportunity to join, then the server will break and must be reset.
 
