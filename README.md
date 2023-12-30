@@ -2,8 +2,12 @@
 2D Singleplayer or Multiplayer Pong game using Socket programming TCP client/server
 
 ## Creating and Running
+Go to a desired folder
 ```bash
 cd College/Python
+```
+Ensure git is properly installed 
+```
 git clone git@github.com:louislin9603/Python-Pong-Project.git
 cd .\Python-Pong-Project\
 pip3 install -r requirements.txt
