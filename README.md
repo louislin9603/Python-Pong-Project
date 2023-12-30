@@ -1,5 +1,5 @@
 # Python-Pong-Project
-2D Singleplayer or Multiplayer Pong game using Socket programming TCP client/server
+2D Singleplayer or Multiplayer Pong game using Socket programming TCP client/server <br>
 Note: Ensure git, python, and pip3 are properly installed 
 
 ## Creating and Running
