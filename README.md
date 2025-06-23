@@ -4,23 +4,20 @@ Note: Ensure git, python, and pip3 are properly installed
 
 ## Creating and Running
 Go to a desired folder
-```bash
-cd College/Python
-```
+
 ```
 git clone git@github.com:louislin9603/Python-Pong-Project.git
 cd .\Python-Pong-Project\
 pip3 install -r requirements.txt
 ```
 
-Contact Info
 ============
 
-Group Members & Email Addresses:
+Group Members:
 
-    Isaiah Huffman [irhu224@uky.edu]
-    Louis Lin      [lli241@uky.edu]
-    Gyunghyun Moon [gmo239@uky.edu]
+    Isaiah Huffman 
+    Louis Lin      
+    Gyunghyun Moon 
 
 
 Versioning
